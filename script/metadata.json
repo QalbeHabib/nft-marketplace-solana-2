@@ -38,4 +38,118 @@
         ]
     },
     "external_url": "https://www.flexx.vip/"
+},
+{
+    "name": "$SAYAPA",
+    "symbol": "SPA",
+    "description": "$SAYAPA is the first memecoin that fully embraces the anxiety, chaos, and excitement of crypto trading.",
+    "image": "https://gateway.pinata.cloud/ipfs/QmRaacbMgNBaTtJiGkzfoKJptRhtWj6qSACcsqU2td3Rsg",
+    "decimals": 9,
+    "attributes": [
+        {
+            "trait_type": "Creator",
+            "value": "Sayapa Community"
+        },
+        {
+            "trait_type": "Website",
+            "value": "https://www.sayapa.vip/"
+        }
+    ],
+    "properties": {
+        "files": [
+            {
+                "uri": "https://gateway.pinata.cloud/ipfs/QmRaacbMgNBaTtJiGkzfoKJptRhtWj6qSACcsqU2td3Rsg",
+                "type": "image/png"
+            }
+        ],
+        "category": "image",
+        "creators": [
+            {
+                "address": "12d5by8To4Uy8FoQCosAsT7V4Hz1JwDHh2Atpmod2g9X",
+                "share": 100
+            }
+        ]
+    },
+    "external_url": "https://www.sayapa.vip/"
 }
+//   result 
+
+yarn create-collection                                                                                                           ─╯
+yarn run v1.22.22
+$ ts-node script/createCollecion.ts
+Using wallet public key (payer/authority): 5fqxDjhDrCYohN3L24K9p33DWnqaBBD8edPSt1mXczgh
+Starting main script execution...
+
+Creating new collection with ID: 41495
+Name: FLEXXTOKEN, Symbol: FLEXX, URI: https: //rose-causal-albatross-891.mypinata.cloud/ipfs/QmTcL1QD4jghCBstdTyc41hQahNYRSpigbYizXRgzJ17Xe
+Derived Collection Mint PDA: 72RPDJH6CKF2yPiiRkkvUf6Ya5nM6aVirMQj1gPa4DBW
+Derived Token Account for Payer: GhgYtmC9i5odWk6Ucn3FKGW4kQZ2cj4yLinVx2HLMiAq
+Create Collection transaction signature: 5ECrC2PkivdGsGb1QmRLzpZG53j7pBS7jLMAyNAdmHFzsFdSwcsCicQauK9tFbAUfDbox2iwm7WQH7wS6sfAty9H
+Collection Mint Address: 72RPDJH6CKF2yPiiRkkvUf6Ya5nM6aVirMQj1gPa4DBW
+Successfully created collection: 72RPDJH6CKF2yPiiRkkvUf6Ya5nM6aVirMQj1gPa4DBW
+Script finished.
+Done in 4.60s.
+
+╭─       ~/personal/nft-mp-components/nft-marketplace-program      master ?12 ──────────────── ✔   5s     12: 22: 02 AM   ─╮
+╰─ yarn create-collection                                                                                                           ─╯
+yarn run v1.22.22
+$ ts-node script/createCollecion.ts
+Using wallet public key (payer/authority): 5fqxDjhDrCYohN3L24K9p33DWnqaBBD8edPSt1mXczgh
+Starting main script execution...
+
+Minting NFT (ID: 815546) into collection: 72RPDJH6CKF2yPiiRkkvUf6Ya5nM6aVirMQj1gPa4DBW
+Name: My First NFT in Collection, Symbol: NFTC1, URI: https: //arweave.net/your-nft-in-collection-metadata-uri
+Derived NFT Mint PDA: 2yDigoR6Bnunym3meoGwcWJrGKDz23qR7SBL6yew34CV
+Derived Token Account for NFT: 75hrrujRUrMVS2TeRtZbsis4uWsUVx3wmEJ17GE2yWZf
+Mint to Collection transaction signature: 4fK5MUYaGwYRsvwd4r1of3jgAvaCYYin8NvxgEweUPSCDBg29hAzo2w7h2jiWvsjQXMaXAAdpKPJQJh4dLv1Po6Z
+Minted NFT Address: 2yDigoR6Bnunym3meoGwcWJrGKDz23qR7SBL6yew34CV
+Script finished.
+Done in 4.41s.
+
+╭─       ~/personal/nft-mp-components/nft-marketplace-program      master ?12 ──────────────── ✔   5s     12: 30: 32 AM   ─╮
+╰─ yarn create-collection                                                                                                           ─╯
+yarn run v1.22.22
+$ ts-node script/createCollecion.ts
+Using wallet public key (payer/authority): 5fqxDjhDrCYohN3L24K9p33DWnqaBBD8edPSt1mXczgh
+Starting main script execution...
+
+Minting NFT (ID: 16082) into collection: 72RPDJH6CKF2yPiiRkkvUf6Ya5nM6aVirMQj1gPa4DBW
+Name: SAYAPA, Symbol: SPA, URI: https: //gateway.pinata.cloud/ipfs/QmRaacbMgNBaTtJiGkzfoKJptRhtWj6qSACcsqU2td3Rsg
+Derived NFT Mint PDA: 3tgw6Uis9EsYYtcihbz5k2H4tv2NQKyAS7RQpwSn3vz1
+Derived Token Account for NFT: F8aMehZL9SnGrefJwc7KSBjNLSrPdMJySmeKawhC8oAD
+Mint to Collection transaction signature: 4WtZ9ReuYCK28Q6d4MsVFYMbmrC4uykyhjfWmvVvdPNBjabvUuxAwQJdC4qdSX3u1hogK9FSx3vLcwj93kC7X1Fk
+Minted NFT Address: 3tgw6Uis9EsYYtcihbz5k2H4tv2NQKyAS7RQpwSn3vz1
+Script finished.
+Done in 4.32s.
+
+╭─       ~/personal/nft-mp-components/nft-marketplace-program      master ?12 ──────────────── ✔   5s     12: 33: 25 AM   ─╮
+╰─ yarn create-collection                                                                                                           ─╯
+yarn run v1.22.22
+$ ts-node script/createCollecion.ts
+Using wallet public key (payer/authority): 5fqxDjhDrCYohN3L24K9p33DWnqaBBD8edPSt1mXczgh
+Starting main script execution...
+
+Minting NFT (ID: 778525) into collection: 72RPDJH6CKF2yPiiRkkvUf6Ya5nM6aVirMQj1gPa4DBW
+Name: SAYAPA, Symbol: SPA, URI: https: //rose-causal-albatross-891.mypinata.cloud/ipfs/QmRyeAFuBBewezkZhucubKLxTG8UNHwvAX6YCWsc47uy5Y
+Derived NFT Mint PDA: 5eKNW8Bnzw95Ze5p2bmmgPexjg7gtTqLBfW2GfG2UrDp
+Derived Token Account for NFT: 6y778KbRyTww1Z1L9gqXgRxQuWYGS8LVE7X1n1Jrs3rU
+Mint to Collection transaction signature: 7u9aaAfsRy7cXBALXH3eA8qK35Z9jzXWkUVAEP6bYSSF3hCG94cSKK6JXSotFyyWmveEXhzwM2Qo4fn7qRnQL5D
+Minted NFT Address: 5eKNW8Bnzw95Ze5p2bmmgPexjg7gtTqLBfW2GfG2UrDp
+Script finished.
+Done in 4.32s.
+
+╭─       ~/personal/nft-mp-components/nft-marketplace-program      master ?12 ──────────────── ✔   4s     12: 34: 29 AM   ─╮
+╰─ yarn create-collection                                                                                                           ─╯
+yarn run v1.22.22
+$ ts-node script/createCollecion.ts
+Using wallet public key (payer/authority): 5fqxDjhDrCYohN3L24K9p33DWnqaBBD8edPSt1mXczgh
+Starting main script execution...
+
+Creating single NFT with ID: 404933
+Name: DEVDEAD, Symbol: DDT, URI: https: //rose-causal-albatross-891.mypinata.cloud/ipfs/QmSxT8wTiXcpamyzjqjGocqerZeDEgvPSz8DZpa6QqP8hm, Price: 1.5, Cant: 1
+Derived NFT Mint PDA: E35TT5cYWPTruwvaHBzRR1CF2WA4bpiPLC6vWqsR2A4K
+Derived Token Account for NFT: AHE9fYWaXz7tdnikHQePGJNqAT3x9Y8Z6ALm9TPvMqty
+Create Single NFT transaction signature: 4huw19FPxiPy1fvenyxjUhRWpnUep2XpvHD8WYkN53a7MMhsE1FCJfG67G8J1gKu5CffCB2DGHc6B11SFRtKF8Sq
+Minted NFT Address: E35TT5cYWPTruwvaHBzRR1CF2WA4bpiPLC6vWqsR2A4K
+Script finished.
+Done in 4.24s.
