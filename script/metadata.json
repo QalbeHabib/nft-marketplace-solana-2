@@ -1,0 +1,41 @@
+{
+    "name": "$FLEXXTOKEN",
+    "symbol": "FLEXX",
+    "description": "$FLEXXTOKEN is the first memecoin that fully embraces the anxiety, chaos, and excitement of crypto trading.",
+    "image": "https://gateway.pinata.cloud/ipfs/QmPoBLo1qefQUD6uvwTJGNNngZcH3vugMavgsZWGjUXFY9",
+    "decimals": 9,
+    "attributes": [
+        {
+            "trait_type": "Creator",
+            "value": "Flexx Community"
+        },
+        {
+            "trait_type": "Website",
+            "value": "https://www.flexx.vip/"
+        },
+        {
+            "trait_type": "Twitter",
+            "value": "https://x.com/flexx_vip"
+        },
+        {
+            "trait_type": "Telegram",
+            "value": "https://t.me/flexx_vip"
+        }
+    ],
+    "properties": {
+        "files": [
+            {
+                "uri": "https://gateway.pinata.cloud/ipfs/QmPoBLo1qefQUD6uvwTJGNNngZcH3vugMavgsZWGjUXFY9",
+                "type": "image/png"
+            }
+        ],
+        "category": "image",
+        "creators": [
+            {
+                "address": "5fqxDjhDrCYohN3L24K9p33DWnqaBBD8edPSt1mXczgh",
+                "share": 100
+            }
+        ]
+    },
+    "external_url": "https://www.flexx.vip/"
+}
