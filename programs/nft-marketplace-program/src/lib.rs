@@ -8,6 +8,7 @@ use anchor_spl::metadata::{
 use anchor_spl::token::{
     close_account, mint_to, transfer, CloseAccount, Mint, MintTo, Token, TokenAccount, Transfer,
 };
+use mpl_token_metadata::accounts::Metadata as MetadataAccount;
 use mpl_token_metadata::types::{Collection, Creator, DataV2};
 
 declare_id!("GBRUTbNjxd7L8pSw14FEfsGPKkVz8rRhKyWiFFh4xkVC");
@@ -430,6 +431,17 @@ pub mod nft_program {
 
     pub fn verify_nft_in_collection(ctx: Context<VerifyNFTInCollection>) -> Result<()> {
         msg!("Verifying NFT in collection");
+
+        // Deserialize collection metadata account
+        let collection_metadata_account =
+            MetadataAccount::try_from(&ctx.accounts.collection_metadata.to_account_info())?;
+
+        // Verify collection authority matches update authority in collection metadata
+        require!(
+            ctx.accounts.collection_authority.key() == collection_metadata_account.update_authority,
+            ErrorCode::UnauthorizedCollectionUpdateAuthority
+        );
+
         verify_collection(
             CpiContext::new(
                 ctx.accounts.metadata_program.to_account_info(),
@@ -456,6 +468,17 @@ pub mod nft_program {
         collection_key: Pubkey,
     ) -> Result<()> {
         msg!("Setting and verifying collection");
+
+        // Deserialize collection metadata account
+        let collection_metadata_account =
+            MetadataAccount::try_from(&ctx.accounts.collection_metadata.to_account_info())?;
+
+        // Verify collection authority matches update authority in collection metadata
+        require!(
+            ctx.accounts.collection_authority.key() == collection_metadata_account.update_authority,
+            ErrorCode::UnauthorizedCollectionUpdateAuthority
+        );
+
         anchor_spl::metadata::set_and_verify_collection(
             CpiContext::new(
                 ctx.accounts.metadata_program.to_account_info(),
@@ -1489,4 +1512,6 @@ pub enum ErrorCode {
     Unauthorized,
     #[msg("Invalid NFT in token account")]
     InvalidNFT,
+    #[msg("Unauthorized collection update authority")]
+    UnauthorizedCollectionUpdateAuthority,
 }
