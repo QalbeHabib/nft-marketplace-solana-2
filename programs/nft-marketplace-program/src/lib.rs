@@ -12,6 +12,101 @@ use mpl_token_metadata::types::{Collection, Creator, DataV2};
 
 declare_id!("GBRUTbNjxd7L8pSw14FEfsGPKkVz8rRhKyWiFFh4xkVC");
 
+#[event]
+pub struct NftMinted {
+    pub id: u64,
+    pub mint: Pubkey,
+    pub payer: Pubkey,
+    pub authority: Pubkey,
+    pub name: String,
+    pub symbol: String,
+    pub uri: String,
+}
+
+#[event]
+pub struct CollectionNftMinted {
+    pub id_nft: u64,
+    pub mint: Pubkey,
+    pub payer: Pubkey,
+    pub authority: Pubkey,
+    pub name: String,
+    pub symbol: String,
+    pub uri: String,
+    pub collection: Pubkey,
+}
+
+#[event]
+pub struct CollectionMinted {
+    pub id_collection: u64,
+    pub mint: Pubkey,
+    pub payer: Pubkey,
+    pub authority: Pubkey,
+    pub name: String,
+    pub symbol: String,
+    pub uri: String,
+}
+
+#[event]
+pub struct NftListed {
+    pub listing_id: u64,
+    pub mint: Pubkey,
+    pub seller: Pubkey,
+    pub price: u64,
+    pub listed_at: i64,
+}
+
+#[event]
+pub struct ListingPriceUpdated {
+    pub listing: Pubkey,
+    pub seller: Pubkey,
+    pub old_price: u64,
+    pub new_price: u64,
+}
+
+#[event]
+pub struct ListingCanceled {
+    pub listing: Pubkey,
+    pub mint: Pubkey,
+    pub seller: Pubkey,
+}
+
+#[event]
+pub struct NftPurchased {
+    pub listing: Pubkey,
+    pub mint: Pubkey,
+    pub buyer: Pubkey,
+    pub seller: Pubkey,
+    pub price: u64,
+    pub marketplace_fee: u64,
+}
+
+#[event]
+pub struct OfferMade {
+    pub offer_id: u64,
+    pub mint: Pubkey,
+    pub buyer: Pubkey,
+    pub price: u64,
+    pub expiry_time: i64,
+    pub created_at: i64,
+}
+
+#[event]
+pub struct OfferAccepted {
+    pub offer: Pubkey,
+    pub mint: Pubkey,
+    pub buyer: Pubkey,
+    pub seller: Pubkey,
+    pub price: u64,
+    pub marketplace_fee: u64,
+}
+
+#[event]
+pub struct OfferCanceled {
+    pub offer: Pubkey,
+    pub mint: Pubkey,
+    pub buyer: Pubkey,
+}
+
 #[program]
 pub mod nft_program {
     use super::*;
@@ -56,6 +151,9 @@ pub mod nft_program {
         )?;
 
         msg!("Run create metadata accounts v3");
+        let name_for_metadata = name.clone();
+        let symbol_for_metadata = symbol.clone();
+        let uri_for_metadata = uri.clone();
         create_metadata_accounts_v3(
             CpiContext::new_with_signer(
                 ctx.accounts.metadata_program.to_account_info(),
@@ -71,9 +169,9 @@ pub mod nft_program {
                 &[&seeds[..]],
             ),
             DataV2 {
-                name,
-                symbol,
-                uri,
+                name: name_for_metadata,
+                symbol: symbol_for_metadata,
+                uri: uri_for_metadata,
                 seller_fee_basis_points: 0,
                 creators: None,
                 collection: None,
@@ -105,6 +203,15 @@ pub mod nft_program {
         )?;
 
         msg!("Minted NFT successfully");
+        emit!(NftMinted {
+            id,
+            mint: ctx.accounts.mint.key(),
+            payer: ctx.accounts.payer.key(),
+            authority: ctx.accounts.authority.key(),
+            name,
+            symbol,
+            uri,
+        });
         Ok(())
     }
 
@@ -155,6 +262,9 @@ pub mod nft_program {
         )?;
 
         msg!("Run create metadata accounts v3");
+        let name_for_metadata = name.clone();
+        let symbol_for_metadata = symbol.clone();
+        let uri_for_metadata = uri.clone();
         create_metadata_accounts_v3(
             CpiContext::new_with_signer(
                 ctx.accounts.metadata_program.to_account_info(),
@@ -170,9 +280,9 @@ pub mod nft_program {
                 &[&seeds[..]],
             ),
             DataV2 {
-                name,
-                symbol,
-                uri,
+                name: name_for_metadata,
+                symbol: symbol_for_metadata,
+                uri: uri_for_metadata,
                 seller_fee_basis_points: 0,
                 creators: Some(vec![Creator {
                     address: ctx.accounts.payer.key(),
@@ -211,6 +321,16 @@ pub mod nft_program {
         )?;
 
         msg!("Minted NFT successfully");
+        emit!(CollectionNftMinted {
+            id_nft,
+            mint: ctx.accounts.mint.key(),
+            payer: ctx.accounts.payer.key(),
+            authority: ctx.accounts.authority.key(),
+            name,
+            symbol,
+            uri,
+            collection: ctx.accounts.collection.key(),
+        });
         Ok(())
     }
 
@@ -240,6 +360,9 @@ pub mod nft_program {
         )?;
 
         msg!("Run create metadata accounts v3 for collection");
+        let name_for_metadata = name.clone();
+        let symbol_for_metadata = symbol.clone();
+        let uri_for_metadata = uri.clone();
         create_metadata_accounts_v3(
             CpiContext::new_with_signer(
                 ctx.accounts.metadata_program.to_account_info(),
@@ -255,9 +378,9 @@ pub mod nft_program {
                 &[&seeds[..]],
             ),
             DataV2 {
-                name,
-                symbol,
-                uri,
+                name: name_for_metadata,
+                symbol: symbol_for_metadata,
+                uri: uri_for_metadata,
                 seller_fee_basis_points: 0,
                 creators: Some(vec![Creator {
                     address: ctx.accounts.authority.key(),
@@ -293,6 +416,15 @@ pub mod nft_program {
         )?;
 
         msg!("Created collection NFT successfully");
+        emit!(CollectionMinted {
+            id_collection,
+            mint: ctx.accounts.mint.key(),
+            payer: ctx.accounts.payer.key(),
+            authority: ctx.accounts.authority.key(),
+            name,
+            symbol,
+            uri,
+        });
         Ok(())
     }
 
@@ -401,7 +533,7 @@ pub mod nft_program {
         )?;
 
         msg!("Minting and verifying NFT in collection");
-        let collection_pubkey_val: Pubkey = *ctx.accounts.collection_mint.key;
+        let collection_pubkey_val: Pubkey = ctx.accounts.collection_mint.key();
         let collection_pubkey_bytes = collection_pubkey_val.to_bytes();
         let id_nft_bytes = id_nft.to_le_bytes();
         let seeds = &[
@@ -410,6 +542,11 @@ pub mod nft_program {
             id_nft_bytes.as_ref(),
             &[ctx.bumps.mint],
         ];
+
+        // Clone strings for metadata to avoid move errors
+        let name_for_metadata = name.clone();
+        let symbol_for_metadata = symbol.clone();
+        let uri_for_metadata = uri.clone();
 
         mint_to(
             CpiContext::new_with_signer(
@@ -424,6 +561,7 @@ pub mod nft_program {
             1,
         )?;
 
+        msg!("Run create metadata accounts v3");
         create_metadata_accounts_v3(
             CpiContext::new_with_signer(
                 ctx.accounts.metadata_program.to_account_info(),
@@ -439,9 +577,9 @@ pub mod nft_program {
                 &[&seeds[..]],
             ),
             DataV2 {
-                name,
-                symbol,
-                uri,
+                name: name_for_metadata,
+                symbol: symbol_for_metadata,
+                uri: uri_for_metadata,
                 seller_fee_basis_points: 0,
                 creators: Some(vec![Creator {
                     address: ctx.accounts.payer.key(),
@@ -497,6 +635,16 @@ pub mod nft_program {
         )?;
 
         msg!("NFT minted and verified in collection successfully");
+        emit!(CollectionNftMinted {
+            id_nft,
+            mint: ctx.accounts.mint.key(),
+            payer: ctx.accounts.payer.key(),
+            authority: ctx.accounts.authority.key(),
+            name,
+            symbol,
+            uri,
+            collection: ctx.accounts.collection_mint.key(),
+        });
         Ok(())
     }
 
@@ -504,10 +652,21 @@ pub mod nft_program {
         msg!("Listing NFT for sale");
         let listing = &mut ctx.accounts.listing;
         let clock = Clock::get()?;
+
+        // Verify ownership
         require!(
             ctx.accounts.seller_token_account.amount == 1,
             ErrorCode::SellerDoesNotOwnNFT
         );
+        require!(
+            ctx.accounts.seller_token_account.mint == ctx.accounts.mint.key(),
+            ErrorCode::InvalidNFT
+        );
+        require!(
+            ctx.accounts.seller_token_account.owner == ctx.accounts.seller.key(),
+            ErrorCode::UnauthorizedSeller
+        );
+
         listing.seller = ctx.accounts.seller.key();
         listing.mint = ctx.accounts.mint.key();
         listing.price = price;
@@ -515,6 +674,13 @@ pub mod nft_program {
         listing.listed_at = clock.unix_timestamp;
         listing.bump = ctx.bumps.listing;
         msg!("NFT listed successfully for {} lamports", price);
+        emit!(NftListed {
+            listing_id,
+            mint: ctx.accounts.mint.key(),
+            seller: ctx.accounts.seller.key(),
+            price,
+            listed_at: listing.listed_at,
+        });
         Ok(())
     }
 
@@ -526,8 +692,15 @@ pub mod nft_program {
             listing.seller == ctx.accounts.seller.key(),
             ErrorCode::UnauthorizedSeller
         );
+        let old_price = listing.price;
         listing.price = new_price;
         msg!("Listing price updated to {} lamports", new_price);
+        emit!(ListingPriceUpdated {
+            listing: ctx.accounts.listing.key(),
+            seller: ctx.accounts.seller.key(),
+            old_price,
+            new_price,
+        });
         Ok(())
     }
 
@@ -541,6 +714,11 @@ pub mod nft_program {
         );
         listing.is_active = false;
         msg!("NFT listing canceled successfully");
+        emit!(ListingCanceled {
+            listing: ctx.accounts.listing.key(),
+            mint: ctx.accounts.listing.mint,
+            seller: ctx.accounts.seller.key(),
+        });
         Ok(())
     }
 
@@ -597,6 +775,14 @@ pub mod nft_program {
 
         listing.is_active = false;
         msg!("NFT purchased successfully for {} lamports", total_price);
+        emit!(NftPurchased {
+            listing: ctx.accounts.listing.key(),
+            mint: ctx.accounts.mint.key(),
+            buyer: ctx.accounts.buyer.key(),
+            seller: ctx.accounts.seller.key(),
+            price: total_price,
+            marketplace_fee,
+        });
         Ok(())
     }
 
@@ -622,6 +808,14 @@ pub mod nft_program {
         offer.created_at = clock.unix_timestamp;
         offer.bump = ctx.bumps.offer;
         msg!("Offer made for {} lamports", offer_price);
+        emit!(OfferMade {
+            offer_id,
+            mint: ctx.accounts.mint.key(),
+            buyer: ctx.accounts.buyer.key(),
+            price: offer_price,
+            expiry_time,
+            created_at: offer.created_at,
+        });
         Ok(())
     }
 
@@ -683,6 +877,14 @@ pub mod nft_program {
 
         offer.is_active = false;
         msg!("Offer accepted for {} lamports", total_price);
+        emit!(OfferAccepted {
+            offer: ctx.accounts.offer.key(),
+            mint: ctx.accounts.mint.key(),
+            buyer: ctx.accounts.buyer.key(),
+            seller: ctx.accounts.seller.key(),
+            price: total_price,
+            marketplace_fee,
+        });
         Ok(())
     }
 
@@ -696,6 +898,11 @@ pub mod nft_program {
         );
         offer.is_active = false;
         msg!("Offer canceled successfully");
+        emit!(OfferCanceled {
+            offer: ctx.accounts.offer.key(),
+            mint: ctx.accounts.offer.mint,
+            buyer: ctx.accounts.buyer.key(),
+        });
         Ok(())
     }
 
@@ -1280,4 +1487,6 @@ pub enum ErrorCode {
     InsufficientFunds,
     #[msg("Only the admin can perform this action")]
     Unauthorized,
+    #[msg("Invalid NFT in token account")]
+    InvalidNFT,
 }
