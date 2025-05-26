@@ -1,0 +1,65 @@
+import * as anchor from "@coral-xyz/anchor";
+import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
+import idl from "../target/idl/nft_program.json"; // Adjust path to your IDL
+import type { NftProgram } from "../target/types/nft_program"; // Adjust path to your IDL
+
+const PROGRAM_ID = new PublicKey("QaQX5WUroY6mHE8RPXXiQUnU73YFRVwKGkSaFcFj6yw");
+const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+
+async function main() {
+  const buyer = Keypair.generate();
+  const airdropSignature = await connection.requestAirdrop(
+    buyer.publicKey,
+    2_000_000_000
+  );
+  await connection.confirmTransaction(airdropSignature);
+
+  const wallet = new anchor.Wallet(buyer);
+  const provider = new anchor.AnchorProvider(connection, wallet, {
+    commitment: "confirmed",
+  });
+  anchor.setProvider(provider);
+
+  const program = new anchor.Program<NftProgram>(idl as NftProgram, provider);
+
+  const PROGRAM_SEED_PREFIX = Buffer.from("nft_marketplace_v1");
+  const OFFER_SEED_PREFIX = Buffer.from("offer");
+
+  const mint = new PublicKey("YOUR_NFT_MINT_PUBLIC_KEY"); // Replace
+  const offerId = new anchor.BN(1);
+  const price = new anchor.BN(1_000_000_000); // 1 SOL
+  const expiryTime = new anchor.BN(
+    Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60
+  ); // 1 week
+
+  const [offerPda] = await PublicKey.findProgramAddress(
+    [
+      PROGRAM_SEED_PREFIX,
+      OFFER_SEED_PREFIX,
+      PROGRAM_ID.toBuffer(),
+      mint.toBuffer(),
+      buyer.publicKey.toBuffer(),
+      offerId.toArrayLike(Buffer, "le", 8),
+    ],
+    PROGRAM_ID
+  );
+
+  const tx = await program.methods
+    .makeOffer(price, expiryTime, offerId)
+    .accounts({
+      buyer: buyer.publicKey,
+      mint: mint,
+      //   @ts-ignore
+
+      offer: offerPda,
+      systemProgram: SystemProgram.programId,
+    })
+    .signers([buyer])
+    .rpc();
+
+  console.log(`Offer made with transaction: ${tx}`);
+}
+
+main().catch((err) => {
+  console.error("Error:", err);
+});

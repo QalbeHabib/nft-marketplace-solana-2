@@ -7,7 +7,7 @@
 // use anchor_spl::token::{mint_to, Mint, MintTo, Token, TokenAccount};
 // use mpl_token_metadata::types::{Collection, Creator, DataV2};
 
-// declare_id!("GBRUTbNjxd7L8pSw14FEfsGPKkVz8rRhKyWiFFh4xkVC");
+// declare_id!("QaQX5WUroY6mHE8RPXXiQUnU73YFRVwKGkSaFcFj6yw");
 
 // #[program]
 // pub mod nft_program {

@@ -1,0 +1,29 @@
+{
+    "name": "nft-marketplace-webhook",
+    "version": "1.0.0",
+    "description": "Webhook server for NFT Marketplace Solana program events",
+    "main": "index.ts",
+    "scripts": {
+        "start": "node index.ts",
+        "dev": "nodemon index.ts",
+        "test": "node test-webhook.js"
+    },
+    "dependencies": {
+        "@coral-xyz/anchor": "^0.29.0",
+        "@supabase/supabase-js": "^2.38.0",
+        "express": "^4.18.2",
+        "axios": "^1.6.0"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.1"
+    },
+    "keywords": [
+        "solana",
+        "nft",
+        "marketplace",
+        "webhook",
+        "helius"
+    ],
+    "author": "",
+    "license": "MIT"
+}
