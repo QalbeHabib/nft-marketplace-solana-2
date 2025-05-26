@@ -278,13 +278,10 @@ pub mod nft_program {
         symbol: String,
         uri: String,
     ) -> Result<()> {
-        msg!("Creating seeds for collection with unique prefix");
+        msg!("Creating collection with unique seeds");
 
         let program_id_bytes = ctx.program_id.to_bytes();
-
         let id_bytes = id_collection.to_le_bytes();
-
-        // FIXED: More unique seeds including program ID
 
         let seeds = &[
             PROGRAM_SEED_PREFIX,
@@ -294,7 +291,8 @@ pub mod nft_program {
             &[ctx.bumps.mint],
         ];
 
-        msg!("Run mint_to for collection");
+        // Mint the collection NFT
+        msg!("Minting collection NFT");
         mint_to(
             CpiContext::new_with_signer(
                 ctx.accounts.token_program.to_account_info(),
@@ -308,10 +306,8 @@ pub mod nft_program {
             1,
         )?;
 
-        msg!("Run create metadata accounts v3 for collection");
-        let name_for_metadata = name.clone();
-        let symbol_for_metadata = symbol.clone();
-        let uri_for_metadata = uri.clone();
+        // Create metadata
+        msg!("Creating collection metadata");
         create_metadata_accounts_v3(
             CpiContext::new_with_signer(
                 ctx.accounts.metadata_program.to_account_info(),
@@ -327,9 +323,9 @@ pub mod nft_program {
                 &[&seeds[..]],
             ),
             DataV2 {
-                name: name_for_metadata,
-                symbol: symbol_for_metadata,
-                uri: uri_for_metadata,
+                name: name.clone(),
+                symbol: symbol.clone(),
+                uri: uri.clone(),
                 seller_fee_basis_points: 0,
                 creators: Some(vec![Creator {
                     address: ctx.accounts.authority.key(),
@@ -344,7 +340,8 @@ pub mod nft_program {
             None,
         )?;
 
-        msg!("Run create master edition v3 for collection");
+        // Create master edition
+        msg!("Creating master edition");
         create_master_edition_v3(
             CpiContext::new_with_signer(
                 ctx.accounts.metadata_program.to_account_info(),
@@ -364,16 +361,34 @@ pub mod nft_program {
             Some(0),
         )?;
 
-        msg!("Created collection NFT successfully");
-        emit!(CollectionMinted {
+        // Initialize the UserCollection PDA
+        let user_collection = &mut ctx.accounts.user_collection;
+        let clock = Clock::get()?;
+
+        user_collection.authority = ctx.accounts.authority.key();
+        user_collection.collection_mint = ctx.accounts.mint.key();
+        user_collection.name = name.clone();
+        user_collection.symbol = symbol.clone();
+        user_collection.uri = uri.clone();
+        user_collection.created_at = clock.unix_timestamp;
+        user_collection.total_items = 0;
+        user_collection.verified = true;
+        user_collection.bump = ctx.bumps.user_collection;
+
+        msg!("Created collection NFT and stored collection data successfully");
+        
+        // Emit the event with additional collection data
+        emit!(CollectionCreated {
             id_collection,
             mint: ctx.accounts.mint.key(),
-            payer: ctx.accounts.payer.key(),
             authority: ctx.accounts.authority.key(),
+            payer: ctx.accounts.payer.key(),
             name,
             symbol,
             uri,
+            created_at: clock.unix_timestamp,
         });
+        
         Ok(())
     }
 
@@ -511,8 +526,6 @@ pub mod nft_program {
         let collection_pubkey_bytes = collection_pubkey_val.to_bytes();
         let id_nft_bytes = id_nft.to_le_bytes();
 
-        // FIXED: More unique seeds including program ID
-
         let seeds = &[
             PROGRAM_SEED_PREFIX,
             COLLECTION_ITEM_SEED_PREFIX,
@@ -614,6 +627,11 @@ pub mod nft_program {
             None,
         )?;
 
+        // Increment the total_items counter in UserCollection
+        let user_collection = &mut ctx.accounts.user_collection;
+        user_collection.total_items = user_collection.total_items.checked_add(1)
+            .ok_or(ErrorCode::ArithmeticOverflow)?;
+
         msg!("NFT minted and verified in collection successfully");
         emit!(CollectionNftMinted {
             id_nft,
@@ -625,6 +643,14 @@ pub mod nft_program {
             uri,
             collection: ctx.accounts.collection_mint.key(),
         });
+
+        // Emit new event for collection item count update
+        emit!(CollectionItemCountUpdated {
+            collection_mint: ctx.accounts.collection_mint.key(),
+            total_items: user_collection.total_items,
+            timestamp: Clock::get()?.unix_timestamp,
+        });
+
         Ok(())
     }
 
@@ -1122,12 +1148,14 @@ pub struct CreateNFT<'info> {
     pub nft_metadata: UncheckedAccount<'info>,
 }
 #[derive(Accounts)]
-#[instruction(id_collection: u64)]
+#[instruction(id_collection: u64, name: String, symbol: String)]
 pub struct CreateCollection<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
+    
     #[account(mut)]
     pub payer: Signer<'info>,
+    
     #[account(
         init,
         payer = payer,
@@ -1143,6 +1171,21 @@ pub struct CreateCollection<'info> {
         bump
     )]
     pub mint: Account<'info, Mint>,
+
+    #[account(
+        init,
+        payer = payer,
+        space = UserCollection::LEN,
+        seeds = [
+            PROGRAM_SEED_PREFIX,
+            b"user_collection",
+            authority.key().as_ref(),
+            mint.key().as_ref(),
+        ],
+        bump
+    )]
+    pub user_collection: Account<'info, UserCollection>,
+    
     #[account(
         init_if_needed,
         payer = payer,
@@ -1150,11 +1193,13 @@ pub struct CreateCollection<'info> {
         associated_token::authority = payer,
     )]
     pub token_account: Account<'info, TokenAccount>,
+    
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub metadata_program: Program<'info, Metadata>,
+    
     #[account(
         mut,
         seeds = [
@@ -1168,6 +1213,7 @@ pub struct CreateCollection<'info> {
     )]
     /// CHECK:
     pub master_edition_account: UncheckedAccount<'info>,
+    
     #[account(
         mut,
         seeds = [
@@ -1257,6 +1303,18 @@ pub struct MintAndVerifyToCollection<'info> {
     pub collection_metadata: UncheckedAccount<'info>,
     /// CHECK:
     pub collection_master_edition: UncheckedAccount<'info>,
+    
+    #[account(
+        mut,
+        seeds = [
+            PROGRAM_SEED_PREFIX,
+            b"user_collection",
+            collection_authority.key().as_ref(),
+            collection_mint.key().as_ref(),
+        ],
+        bump,
+    )]
+    pub user_collection: Account<'info, UserCollection>,
 }
 
 #[account]
@@ -1297,6 +1355,50 @@ pub struct ProgramState {
 
 impl ProgramState {
     pub const LEN: usize = 8 + 32 + 8 + 8;
+}
+
+#[account]
+pub struct UserCollection {
+    pub authority: Pubkey,            // User who created the collection
+    pub collection_mint: Pubkey,      // Collection mint address
+    pub name: String,                 // Collection name
+    pub symbol: String,               // Collection symbol
+    pub uri: String,                  // Collection metadata URI
+    pub created_at: i64,             // Timestamp when collection was created
+    pub total_items: u64,            // Total items in collection (can be updated)
+    pub verified: bool,              // Whether collection is verified
+    pub bump: u8,                    // PDA bump
+}
+
+impl UserCollection {
+    // Calculate space needed for the account
+    pub const LEN: usize = 8 +  // discriminator
+        32 +                    // authority
+        32 +                    // collection_mint
+        64 +                    // name (max length 32)
+        16 +                    // symbol (max length 8)
+        200 +                   // uri (max length 200)
+        8 +                     // created_at
+        8 +                     // total_items
+        1 +                     // verified
+        1;                      // bump
+
+    pub fn get_collection_by_authority(
+        program_id: &Pubkey,
+        authority: &Pubkey,
+        collection_mint: &Pubkey,
+    ) -> Pubkey {
+        Pubkey::find_program_address(
+            &[
+                PROGRAM_SEED_PREFIX,
+                b"user_collection",
+                authority.as_ref(),
+                collection_mint.as_ref(),
+            ],
+            program_id,
+        )
+        .0
+    }
 }
 
 // FIXED: Enhanced ListNFT context with unique seeds
@@ -1600,14 +1702,15 @@ pub struct CollectionNftMinted {
 }
 
 #[event]
-pub struct CollectionMinted {
+pub struct CollectionCreated {
     pub id_collection: u64,
     pub mint: Pubkey,
-    pub payer: Pubkey,
     pub authority: Pubkey,
+    pub payer: Pubkey,
     pub name: String,
     pub symbol: String,
     pub uri: String,
+    pub created_at: i64,
 }
 
 #[event]
@@ -1736,4 +1839,12 @@ pub enum ErrorCode {
     UnauthorizedProgramInitialization,
     
   
-}                                 
+}
+
+#[event]
+pub struct CollectionItemCountUpdated {
+    pub collection_mint: Pubkey,
+    pub total_items: u64,
+    pub timestamp: i64,
+}
+                                 
