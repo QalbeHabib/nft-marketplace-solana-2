@@ -16,7 +16,7 @@ const supabase = createClient(
 const coder = new BorshCoder(idl);
 
 // Your program ID
-const PROGRAM_ID = "QaQX5WUroY6mHE8RPXXiQUnU73YFRVwKGkSaFcFj6yw";
+const PROGRAM_ID = "48Afa15ypgAHQr7qNm2QqW8WL114Ynwer556CV9chARa";
 
 // Helper function to decode events from logs
 function decodeEventsFromLogs(logs, programId) {
@@ -71,7 +71,7 @@ app.post("/webhook", async (req, res) => {
   try {
     console.log("=== WEBHOOK RECEIVED ===");
     console.log("Raw payload:", JSON.stringify(req.body, null, 2));
-    
+
     const transactions = Array.isArray(req.body) ? req.body : [req.body];
     console.log(`Processing ${transactions.length} transactions`);
 
@@ -82,7 +82,7 @@ app.post("/webhook", async (req, res) => {
         // Check if this transaction involves our program
         const accountKeys = transaction.transaction?.message?.accountKeys || [];
         console.log("Account keys in transaction:", accountKeys);
-        
+
         const isProgramInvolved = accountKeys.some((key) => key === PROGRAM_ID);
         console.log("Is our program involved?", isProgramInvolved);
 
@@ -93,7 +93,7 @@ app.post("/webhook", async (req, res) => {
 
         const logMessages = transaction.meta?.logMessages || [];
         console.log("Log messages:", logMessages);
-        
+
         const signature = transaction.transaction?.signatures?.[0];
         const blockTime = transaction.blockTime;
 

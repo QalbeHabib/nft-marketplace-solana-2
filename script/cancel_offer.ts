@@ -3,7 +3,9 @@ import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import idl from "../target/idl/nft_program.json"; // Adjust path to your IDL
 import type { NftProgram } from "../target/types/nft_program"; // Adjust path to your IDL
 
-const PROGRAM_ID = new PublicKey("QaQX5WUroY6mHE8RPXXiQUnU73YFRVwKGkSaFcFj6yw");
+const PROGRAM_ID = new PublicKey(
+  "48Afa15ypgAHQr7qNm2QqW8WL114Ynwer556CV9chARa"
+);
 const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 
 async function main() {

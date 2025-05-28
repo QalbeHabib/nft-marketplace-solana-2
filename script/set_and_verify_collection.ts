@@ -15,7 +15,9 @@ import {
   createApproveCollectionAuthorityInstruction,
 } from "@metaplex-foundation/mpl-token-metadata";
 
-const PROGRAM_ID = new PublicKey("QaQX5WUroY6mHE8RPXXiQUnU73YFRVwKGkSaFcFj6yw");
+const PROGRAM_ID = new PublicKey(
+  "48Afa15ypgAHQr7qNm2QqW8WL114Ynwer556CV9chARa"
+);
 const METAPLEX_PROGRAM_ID = new PublicKey(
   "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
 );

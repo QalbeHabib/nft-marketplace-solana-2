@@ -11,7 +11,7 @@ use anchor_spl::token::{
 use mpl_token_metadata::accounts::Metadata as MetadataAccount;
 use mpl_token_metadata::types::{Collection, Creator, DataV2};
 
-declare_id!("QaQX5WUroY6mHE8RPXXiQUnU73YFRVwKGkSaFcFj6yw");
+declare_id!("48Afa15ypgAHQr7qNm2QqW8WL114Ynwer556CV9chARa");
 
 // FIXED: Constants for unique seed prefixes to avoid collisions
 
@@ -39,6 +39,7 @@ pub mod nft_program {
         name: String,
         symbol: String,
         uri: String,
+        royalty_percent: u16,
     ) -> Result<()> {
         // Enforce minting price payment
         let minting_price = ctx.accounts.program_state.minting_price;
@@ -53,6 +54,9 @@ pub mod nft_program {
             ),
             minting_price,
         )?;
+
+        // Validate and convert royalty percentage to basis points
+        let seller_fee_basis_points = validate_royalty_percent(royalty_percent)?;
 
         msg!("Creating seeds with unique prefix");
 
@@ -84,6 +88,14 @@ pub mod nft_program {
         let name_for_metadata = name.clone();
         let symbol_for_metadata = symbol.clone();
         let uri_for_metadata = uri.clone();
+        
+        // Create the creators vector for metadata
+        let creators = vec![Creator {
+            address: ctx.accounts.payer.key(),
+            verified: true,
+            share: 100,
+        }];
+        
         create_metadata_accounts_v3(
             CpiContext::new_with_signer(
                 ctx.accounts.metadata_program.to_account_info(),
@@ -102,8 +114,8 @@ pub mod nft_program {
                 name: name_for_metadata,
                 symbol: symbol_for_metadata,
                 uri: uri_for_metadata,
-                seller_fee_basis_points: 0,
-                creators: None,
+                seller_fee_basis_points,
+                creators: Some(creators.clone()),
                 collection: None,
                 uses: None,
             },
@@ -133,6 +145,17 @@ pub mod nft_program {
         )?;
 
         msg!("Minted NFT successfully");
+        
+        // Convert creators to CreatorEventData for the event
+        let creator_event_data: Vec<CreatorEventData> = creators
+            .iter()
+            .map(|c| CreatorEventData {
+                address: c.address,
+                verified: c.verified,
+                share: c.share,
+            })
+            .collect();
+        
         emit!(NftMinted {
             id,
             mint: ctx.accounts.mint.key(),
@@ -141,7 +164,11 @@ pub mod nft_program {
             name,
             symbol,
             uri,
+            royalty_percent,
+            seller_fee_basis_points,
+            creators: creator_event_data,
         });
+
         Ok(())
     }
 
@@ -152,6 +179,7 @@ pub mod nft_program {
         name: String,
         symbol: String,
         uri: String,
+        royalty_percent: u16,
     ) -> Result<()> {
         // Enforce minting price payment
         let minting_price = ctx.accounts.program_state.minting_price;
@@ -166,6 +194,9 @@ pub mod nft_program {
             ),
             minting_price,
         )?;
+
+        // Validate and convert royalty percentage to basis points
+        let seller_fee_basis_points = validate_royalty_percent(royalty_percent)?;
 
         msg!("Creating seeds for NFT in collection with unique prefix");
 
@@ -202,6 +233,14 @@ pub mod nft_program {
         let name_for_metadata = name.clone();
         let symbol_for_metadata = symbol.clone();
         let uri_for_metadata = uri.clone();
+        
+        // Create the creators vector for metadata
+        let creators = vec![Creator {
+            address: ctx.accounts.payer.key(),
+            verified: true,
+            share: 100,
+        }];
+        
         create_metadata_accounts_v3(
             CpiContext::new_with_signer(
                 ctx.accounts.metadata_program.to_account_info(),
@@ -220,12 +259,8 @@ pub mod nft_program {
                 name: name_for_metadata,
                 symbol: symbol_for_metadata,
                 uri: uri_for_metadata,
-                seller_fee_basis_points: 0,
-                creators: Some(vec![Creator {
-                    address: ctx.accounts.payer.key(),
-                    verified: true,
-                    share: 100,
-                }]),
+                seller_fee_basis_points,
+                creators: Some(creators.clone()),
                 collection: Some(Collection {
                     key: ctx.accounts.collection.key(),
                     verified: false, // Will be verified in the next step
@@ -258,6 +293,17 @@ pub mod nft_program {
         )?;
 
         msg!("Minted NFT successfully");
+        
+        // Convert creators to CreatorEventData for the event
+        let creator_event_data: Vec<CreatorEventData> = creators
+            .iter()
+            .map(|c| CreatorEventData {
+                address: c.address,
+                verified: c.verified,
+                share: c.share,
+            })
+            .collect();
+        
         emit!(CollectionNftMinted {
             id_nft,
             mint: ctx.accounts.mint.key(),
@@ -267,7 +313,11 @@ pub mod nft_program {
             symbol,
             uri,
             collection: ctx.accounts.collection.key(),
+            royalty_percent,
+            seller_fee_basis_points,
+            creators: creator_event_data,
         });
+
         Ok(())
     }
 
@@ -504,6 +554,7 @@ pub mod nft_program {
         name: String,
         symbol: String,
         uri: String,
+        royalty_percent: u16,
     ) -> Result<()> {
         // Enforce minting price payment
         let minting_price = ctx.accounts.program_state.minting_price;
@@ -518,6 +569,9 @@ pub mod nft_program {
             ),
             minting_price,
         )?;
+
+        // Validate and convert royalty percentage to basis points
+        let seller_fee_basis_points = validate_royalty_percent(royalty_percent)?;
 
         msg!("Minting and verifying NFT in collection with unique seeds");
 
@@ -534,6 +588,23 @@ pub mod nft_program {
             id_nft_bytes.as_ref(),
             &[ctx.bumps.mint],
         ];
+
+        // Initialize UserCollection if it's new
+        let user_collection = &mut ctx.accounts.user_collection;
+        
+        // Only initialize if it's a new account (total_items will be 0 by default for new accounts)
+        if user_collection.authority == Pubkey::default() {
+            msg!("Initializing new UserCollection");
+            user_collection.authority = ctx.accounts.collection_authority.key();
+            user_collection.collection_mint = ctx.accounts.collection_mint.key();
+            user_collection.name = name.clone();
+            user_collection.symbol = symbol.clone();
+            user_collection.uri = uri.clone();
+            user_collection.created_at = Clock::get()?.unix_timestamp;
+            user_collection.total_items = 0;
+            user_collection.verified = true;
+            user_collection.bump = ctx.bumps.user_collection;
+        }
 
         // Clone strings for metadata to avoid move errors
         let name_for_metadata = name.clone();
@@ -572,7 +643,7 @@ pub mod nft_program {
                 name: name_for_metadata,
                 symbol: symbol_for_metadata,
                 uri: uri_for_metadata,
-                seller_fee_basis_points: 0,
+                seller_fee_basis_points,
                 creators: Some(vec![Creator {
                     address: ctx.accounts.payer.key(),
                     verified: true,
@@ -642,6 +713,13 @@ pub mod nft_program {
             symbol,
             uri,
             collection: ctx.accounts.collection_mint.key(),
+            royalty_percent,
+            seller_fee_basis_points,
+            creators: vec![CreatorEventData {
+                address: ctx.accounts.payer.key(),
+                verified: true,
+                share: 100,
+            }],
         });
 
         // Emit new event for collection item count update
@@ -1000,6 +1078,22 @@ fn calculate_marketplace_fee(total_price: u64, fee_bps: u16) -> Result<u64> {
     Ok(fee_u128 as u64)
 }
 
+// Validate and convert royalty percentage to basis points
+fn validate_royalty_percent(royalty_percent: u16) -> Result<u16> {
+    // 50% = 5000 basis points
+    require!(
+        royalty_percent <= 50,
+        ErrorCode::RoyaltyTooHigh
+    );
+    
+    // Convert percentage to basis points (multiply by 100)
+    let basis_points = royalty_percent
+        .checked_mul(100)
+        .ok_or(ErrorCode::ArithmeticOverflow)?;
+
+    Ok(basis_points)
+}
+
 // FIXED: Enhanced MintToCollection context with collection verification support
 
 #[derive(Accounts)]
@@ -1305,7 +1399,9 @@ pub struct MintAndVerifyToCollection<'info> {
     pub collection_master_edition: UncheckedAccount<'info>,
     
     #[account(
-        mut,
+        init_if_needed,
+        payer = payer,
+        space = UserCollection::LEN,
         seeds = [
             PROGRAM_SEED_PREFIX,
             b"user_collection",
@@ -1687,6 +1783,9 @@ pub struct NftMinted {
     pub name: String,
     pub symbol: String,
     pub uri: String,
+    pub royalty_percent: u16,
+    pub seller_fee_basis_points: u16,
+    pub creators: Vec<CreatorEventData>,
 }
 
 #[event]
@@ -1699,6 +1798,9 @@ pub struct CollectionNftMinted {
     pub symbol: String,
     pub uri: String,
     pub collection: Pubkey,
+    pub royalty_percent: u16,
+    pub seller_fee_basis_points: u16,
+    pub creators: Vec<CreatorEventData>,
 }
 
 #[event]
@@ -1774,21 +1876,6 @@ pub struct OfferCanceled {
     pub buyer: Pubkey,
 }
 
-// NEW: Events for offer cleanup functionality
-#[event]
-pub struct OfferExpiredAndCleaned {
-    pub offer: Pubkey,
-    pub mint: Pubkey,
-    pub buyer: Pubkey,
-    pub expired_at: i64,
-    pub cleaned_at: i64,
-}
-
-#[event]
-pub struct BatchCleanupCompleted {
-    pub cleaned_count: u32,
-    pub timestamp: i64,
-}
 
 #[event]
 pub struct ProgramStateInitialized {
@@ -1837,8 +1924,8 @@ pub enum ErrorCode {
     OfferExpiryTooLong,
     #[msg("Unauthorized program initialization - only program authority can initialize")]
     UnauthorizedProgramInitialization,
-    
-  
+    #[msg("Royalty percentage too high - maximum 50%")]
+    RoyaltyTooHigh,
 }
 
 #[event]
@@ -1846,5 +1933,23 @@ pub struct CollectionItemCountUpdated {
     pub collection_mint: Pubkey,
     pub total_items: u64,
     pub timestamp: i64,
+}
+
+// Add this new struct for events
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+pub struct CreatorEventData {
+    pub address: Pubkey,
+    pub verified: bool,
+    pub share: u8,
+}
+
+impl From<Creator> for CreatorEventData {
+    fn from(creator: Creator) -> Self {
+        Self {
+            address: creator.address,
+            verified: creator.verified,
+            share: creator.share,
+        }
+    }
 }
                                  

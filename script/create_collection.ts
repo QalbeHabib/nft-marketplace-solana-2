@@ -10,7 +10,9 @@ import type { NftProgram } from "../target/types/nft_program";
 import * as fs from "fs";
 
 // Program ID from your lib.rs
-const PROGRAM_ID = new PublicKey("QaQX5WUroY6mHE8RPXXiQUnU73YFRVwKGkSaFcFj6yw");
+const PROGRAM_ID = new PublicKey(
+  "48Afa15ypgAHQr7qNm2QqW8WL114Ynwer556CV9chARa"
+);
 const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 
 // Load the admin keypair (deployer or authorized admin)

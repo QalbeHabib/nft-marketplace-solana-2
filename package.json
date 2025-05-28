@@ -3,7 +3,7 @@
   "scripts": {
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
-    "initialize-program-state": "ts-node script/initialize_program_state.ts",
+    "initalize-program-state": "ts-node script/initialize_program_state.ts",
     "createCollection": "ts-node script/create_collection.ts",
     "mintAndVerifyToCollection": "ts-node script/mint_and_verify_to_collection.ts",
     "mintToCollection": "ts-node script/mint_to_collection.ts",
@@ -11,7 +11,9 @@
     "webhook": "ts-node tests/index.ts",
     "start": "node tests/index.ts",
     "dev": "nodemon tests/index.ts",
-    "test": "node tests/test-webhook.js"
+    "test": "node tests/test-webhook.js",
+    "keypairBalance": "ts-node keypairBalance/main.ts",
+    "closeAccounts": "ts-node keypairBalance/closeAcccounts.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
