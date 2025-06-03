@@ -4,7 +4,7 @@ import idl from "../target/idl/nft_program.json"; // Adjust path to your IDL
 import type { NftProgram } from "../target/types/nft_program"; // Adjust path to your IDL
 
 const PROGRAM_ID = new PublicKey(
-  "48Afa15ypgAHQr7qNm2QqW8WL114Ynwer556CV9chARa"
+  "Equiqs1Z5Q4F1gBuciqo6yrvqNERzwp5v9Fskhq2A5WB"
 );
 const METAPLEX_PROGRAM_ID = new PublicKey(
   "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
@@ -50,73 +50,73 @@ async function main() {
   );
   const adminPublicKey = programState.admin;
 
-  // NFT parameters
-  const id = new anchor.BN(1);
-  const name = "My NFT";
-  const symbol = "MNFT";
-  const uri = "https://example.com/nft.json";
+  // // NFT parameters
+  // const id = new anchor.BN(1);
+  // const name = "My NFT";
+  // const symbol = "MNFT";
+  // const uri = "https://example.com/nft.json";
 
-  // Derive mint PDA
-  const [mintPda] = await PublicKey.findProgramAddressSync(
-    [
-      PROGRAM_SEED_PREFIX,
-      MINT_SEED_PREFIX,
-      PROGRAM_ID.toBuffer(),
-      id.toArrayLike(Buffer, "le", 8),
-    ],
-    PROGRAM_ID
-  );
+  // // Derive mint PDA
+  // const [mintPda] = await PublicKey.findProgramAddressSync(
+  //   [
+  //     PROGRAM_SEED_PREFIX,
+  //     MINT_SEED_PREFIX,
+  //     PROGRAM_ID.toBuffer(),
+  //     id.toArrayLike(Buffer, "le", 8),
+  //   ],
+  //   PROGRAM_ID
+  // );
 
-  // Derive metadata PDA
-  const [metadataPda] = await PublicKey.findProgramAddressSync(
-    [
-      Buffer.from("metadata"),
-      METAPLEX_PROGRAM_ID.toBuffer(),
-      mintPda.toBuffer(),
-    ],
-    METAPLEX_PROGRAM_ID
-  );
+  // // Derive metadata PDA
+  // const [metadataPda] = await PublicKey.findProgramAddressSync(
+  //   [
+  //     Buffer.from("metadata"),
+  //     METAPLEX_PROGRAM_ID.toBuffer(),
+  //     mintPda.toBuffer(),
+  //   ],
+  //   METAPLEX_PROGRAM_ID
+  // );
 
-  // Derive master edition PDA
-  const [masterEditionPda] = await PublicKey.findProgramAddressSync(
-    [
-      Buffer.from("metadata"),
-      METAPLEX_PROGRAM_ID.toBuffer(),
-      mintPda.toBuffer(),
-      Buffer.from("edition"),
-    ],
-    METAPLEX_PROGRAM_ID
-  );
+  // // Derive master edition PDA
+  // const [masterEditionPda] = await PublicKey.findProgramAddressSync(
+  //   [
+  //     Buffer.from("metadata"),
+  //     METAPLEX_PROGRAM_ID.toBuffer(),
+  //     mintPda.toBuffer(),
+  //     Buffer.from("edition"),
+  //   ],
+  //   METAPLEX_PROGRAM_ID
+  // );
 
-  // Get associated token account
-  const tokenAccount = await anchor.utils.token.associatedAddress({
-    mint: mintPda,
-    owner: payer.publicKey,
-  });
+  // // Get associated token account
+  // const tokenAccount = await anchor.utils.token.associatedAddress({
+  //   mint: mintPda,
+  //   owner: payer.publicKey,
+  // });
 
-  // Execute transaction
-  const tx = await program.methods
-    .createSingleNft(id, name, symbol, uri)
-    .accounts({
-      authority: authority.publicKey,
-      payer: payer.publicKey,
-      //   @ts-ignore
-      mint: mintPda,
-      tokenAccount: tokenAccount,
-      programState: programStatePda,
-      mintFeeAccount: adminPublicKey,
-      associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
-      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      systemProgram: SystemProgram.programId,
-      tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
-      metadataProgram: METAPLEX_PROGRAM_ID,
-      masterEditionAccount: masterEditionPda,
-      nftMetadata: metadataPda,
-    })
-    .signers([authority, payer])
-    .rpc();
+  // // Execute transaction
+  // const tx = await program.methods
+  //   .createSingleNft(id, name, symbol, uri)
+  //   .accounts({
+  //     authority: authority.publicKey,
+  //     payer: payer.publicKey,
+  //     //   @ts-ignore
+  //     mint: mintPda,
+  //     tokenAccount: tokenAccount,
+  //     programState: programStatePda,
+  //     mintFeeAccount: adminPublicKey,
+  //     associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+  //     rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+  //     systemProgram: SystemProgram.programId,
+  //     tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
+  //     metadataProgram: METAPLEX_PROGRAM_ID,
+  //     masterEditionAccount: masterEditionPda,
+  //     nftMetadata: metadataPda,
+  //   })
+  //   .signers([authority, payer])
+  //   .rpc();
 
-  console.log(`NFT created with transaction: ${tx}`);
+  // console.log(`NFT created with transaction: ${tx}`);
 }
 
 main().catch((err) => {

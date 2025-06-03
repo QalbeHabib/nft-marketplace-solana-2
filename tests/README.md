@@ -71,7 +71,7 @@ npm start
 3. Create a new webhook with these settings:
    - **Webhook URL**: `https://your-domain.com/webhook` (or use ngrok for testing)
    - **Webhook Type**: "Enhanced"
-   - **Account Addresses**: Add your program ID: `48Afa15ypgAHQr7qNm2QqW8WL114Ynwer556CV9chARa`
+   - **Account Addresses**: Add your program ID: `Equiqs1Z5Q4F1gBuciqo6yrvqNERzwp5v9Fskhq2A5WB`
    - **Transaction Types**: Select "Any" or specific types you want to monitor
 
 ### 6. Test the Setup

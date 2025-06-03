@@ -16,39 +16,180 @@ const supabase = createClient(
 const coder = new BorshCoder(idl);
 
 // Your program ID
-const PROGRAM_ID = "48Afa15ypgAHQr7qNm2QqW8WL114Ynwer556CV9chARa";
+const PROGRAM_ID = "Equiqs1Z5Q4F1gBuciqo6yrvqNERzwp5v9Fskhq2A5WB";
 
 // Helper function to decode events from logs
 function decodeEventsFromLogs(logs, programId) {
   const events = [];
 
+  console.log(
+    `Attempting to decode events from ${logs.length} logs for program ${programId}`
+  );
+
+  // Look for NFT minting patterns in logs
+  let nftMintEvent = null;
+  let collectionMintEvent = null;
+  let mintAddress = null;
+  let ownerAddress = null;
+
+  // First pass to gather context
+  for (const log of logs) {
+    // Look for mint address
+    if (
+      log.includes("Associated Token Account Program") &&
+      log.includes("Create")
+    ) {
+      // The next few logs might contain token account info
+      console.log("Found token account creation");
+    }
+
+    // Look for NFT minting indicators
+    if (log.includes("Program log: Minting and verifying NFT")) {
+      console.log("Found NFT minting operation");
+    }
+
+    // Look for collection creation indicators
+    if (
+      log.includes("Program log: Creating collection") ||
+      log.includes("Create Metadata Accounts") ||
+      (log.includes("collection") && log.includes("create"))
+    ) {
+      console.log("Found potential collection creation operation");
+      collectionMintEvent = {
+        name: "CollectionMinted",
+        data: {
+          success: true,
+          timestamp: new Date().toISOString(),
+        },
+      };
+    }
+
+    // Check for successful NFT minting
+    if (log.includes("NFT minted and verified in collection successfully")) {
+      console.log("Found successful NFT minting confirmation");
+      nftMintEvent = {
+        name: "NftMinted",
+        data: {
+          success: true,
+          timestamp: new Date().toISOString(),
+        },
+      };
+    }
+
+    // Check for successful collection creation
+    if (
+      log.includes("Collection created successfully") ||
+      (log.includes("success") && log.includes("collection"))
+    ) {
+      console.log("Found successful collection creation confirmation");
+      if (collectionMintEvent) {
+        collectionMintEvent.data.confirmation = true;
+      }
+    }
+  }
+
+  // Now process the Program data logs which contain the serialized event data
   for (const log of logs) {
     try {
       // Look for program data logs (these contain events)
       if (log.startsWith("Program data: ")) {
         const base64Data = log.substring("Program data: ".length).trim();
-        const binaryData = Buffer.from(base64Data, "base64");
+        console.log(`Found Program data: ${base64Data.substring(0, 20)}...`);
 
-        // Try to decode as an event
-        const decodedEvent = coder.events.decode(binaryData);
-        if (decodedEvent) {
-          events.push(decodedEvent);
+        try {
+          const binaryData = Buffer.from(base64Data, "base64");
+          console.log(`Decoded binary data length: ${binaryData.length} bytes`);
+
+          // Try to decode as an event
+          const decodedEvent = coder.events.decode(binaryData);
+          console.log(
+            `Decoded event result: ${
+              decodedEvent ? JSON.stringify(decodedEvent) : "null"
+            }`
+          );
+
+          if (decodedEvent) {
+            events.push(decodedEvent);
+          } else if (nftMintEvent && events.length === 0) {
+            // If we couldn't decode the event but we detected NFT minting
+            // and haven't added any events yet, use our detected event
+            events.push(nftMintEvent);
+          } else if (collectionMintEvent && events.length === 0) {
+            // If we couldn't decode the event but we detected collection creation
+            events.push(collectionMintEvent);
+          }
+        } catch (decodeError) {
+          console.error(`Error decoding base64 data: ${decodeError.message}`);
+
+          // If decoding failed but we have a detected event, use that
+          if (nftMintEvent && events.length === 0) {
+            events.push(nftMintEvent);
+          } else if (collectionMintEvent && events.length === 0) {
+            events.push(collectionMintEvent);
+          }
         }
       }
       // Also check for "Program log: " entries that might contain events
       else if (log.startsWith("Program log: ")) {
         const logData = log.substring("Program log: ".length).trim();
 
+        // Check if it's JSON data
+        if (logData.startsWith("{") && logData.endsWith("}")) {
+          console.log(`Found potential JSON data in program log: ${logData}`);
+          try {
+            const jsonData = JSON.parse(logData);
+            // Add as a custom event
+            events.push({
+              name: "JsonLogEvent",
+              data: jsonData,
+            });
+            console.log("Added JSON data as event");
+          } catch (jsonError) {
+            // Not valid JSON
+            console.log("Not valid JSON data");
+          }
+        }
+        // Check if it's a mint instruction
+        else if (
+          logData.includes("Instruction: Mint") ||
+          logData.includes("NFT minted")
+        ) {
+          console.log(`Found minting instruction: ${logData}`);
+          // We'll collect this information for our fallback event
+          if (nftMintEvent) {
+            nftMintEvent.data.instruction = logData;
+          }
+        }
+        // Check if it's a collection creation instruction
+        else if (
+          logData.includes("Instruction: Create") ||
+          (logData.includes("collection") && logData.includes("creat"))
+        ) {
+          console.log(`Found collection creation instruction: ${logData}`);
+          // We'll collect this information for our fallback event
+          if (collectionMintEvent) {
+            collectionMintEvent.data.instruction = logData;
+          }
+        }
         // Check if it looks like base64 encoded data
-        if (logData.match(/^[A-Za-z0-9+/]+=*$/)) {
+        else if (logData.match(/^[A-Za-z0-9+/]+=*$/)) {
+          console.log(`Found potential base64 data in program log: ${logData}`);
           try {
             const binaryData = Buffer.from(logData, "base64");
+            console.log(`Decoded binary length: ${binaryData.length} bytes`);
+
             const decodedEvent = coder.events.decode(binaryData);
+            console.log(
+              `Decoded event from program log: ${
+                decodedEvent ? JSON.stringify(decodedEvent) : "null"
+              }`
+            );
+
             if (decodedEvent) {
               events.push(decodedEvent);
             }
           } catch (e) {
-            // Not all program logs are events, so this is expected
+            console.log(`Not a decodable event: ${e.message}`);
           }
         }
       }
@@ -58,6 +199,33 @@ function decodeEventsFromLogs(logs, programId) {
     }
   }
 
+  // If we detected an event but couldn't decode any events, add our fallback event
+  if ((nftMintEvent || collectionMintEvent) && events.length === 0) {
+    console.log("Adding fallback event");
+    if (nftMintEvent) {
+      events.push(nftMintEvent);
+    } else if (collectionMintEvent) {
+      events.push(collectionMintEvent);
+    }
+  }
+
+  // If we still have no events but we know our program is involved,
+  // create a generic transaction event
+  if (events.length === 0) {
+    console.log(
+      "No specific events detected, adding generic transaction event"
+    );
+    events.push({
+      name: "ProgramTransaction",
+      data: {
+        timestamp: new Date().toISOString(),
+        program_id: programId,
+        description: "Transaction involving program detected",
+      },
+    });
+  }
+
+  console.log(`Total events decoded: ${events.length}`);
   return events;
 }
 
@@ -70,7 +238,7 @@ app.get("/health", (req, res) => {
 app.post("/webhook", async (req, res) => {
   try {
     console.log("=== WEBHOOK RECEIVED ===");
-    console.log("Raw payload:", JSON.stringify(req.body, null, 2));
+    console.log(`Received webhook at: ${new Date().toISOString()}`);
 
     const transactions = Array.isArray(req.body) ? req.body : [req.body];
     console.log(`Processing ${transactions.length} transactions`);
@@ -79,32 +247,59 @@ app.post("/webhook", async (req, res) => {
 
     for (const transaction of transactions) {
       try {
-        // Check if this transaction involves our program
-        const accountKeys = transaction.transaction?.message?.accountKeys || [];
-        console.log("Account keys in transaction:", accountKeys);
-
-        const isProgramInvolved = accountKeys.some((key) => key === PROGRAM_ID);
-        console.log("Is our program involved?", isProgramInvolved);
-
-        if (!isProgramInvolved) {
-          console.log("Skipping transaction - program not involved");
-          continue; // Skip transactions that don't involve our program
-        }
-
-        const logMessages = transaction.meta?.logMessages || [];
-        console.log("Log messages:", logMessages);
-
         const signature = transaction.transaction?.signatures?.[0];
-        const blockTime = transaction.blockTime;
-
         if (!signature) {
           console.warn("Transaction missing signature, skipping");
           continue;
         }
 
+        console.log(`Processing transaction: ${signature}`);
+
+        // Check if this transaction involves our program
+        const accountKeys = transaction.transaction?.message?.accountKeys || [];
+
+        // For debugging - print account keys for better visibility
+        if (Array.isArray(accountKeys)) {
+          console.log("Account keys as list:");
+          accountKeys.forEach((key, index) => {
+            console.log(`[${index}] ${key}`);
+          });
+        }
+
+        // Get log messages
+        const logMessages = transaction.meta?.logMessages || [];
+        if (!logMessages || logMessages.length === 0) {
+          console.log("No log messages found in transaction");
+          continue;
+        }
+
+        // Check if our program is involved
+        const isProgramInvolved = accountKeys.some((key) => key === PROGRAM_ID);
+        const programMentionedInLogs = logMessages.some((log) =>
+          log.includes(PROGRAM_ID)
+        );
+
+        console.log("Is our program involved in accounts?", isProgramInvolved);
+        console.log(
+          "Is our program mentioned in logs?",
+          programMentionedInLogs
+        );
+
+        // Allow processing if program is mentioned in logs or account keys
+        if (!isProgramInvolved && !programMentionedInLogs) {
+          console.log("Skipping transaction - program not involved");
+          continue; // Skip transactions that don't involve our program
+        }
+
+        // Get blockTime for timestamp
+        const blockTime = transaction.blockTime;
+        const timestamp = blockTime ? new Date(blockTime * 1000) : new Date();
+
         // Decode events from logs
         const events = decodeEventsFromLogs(logMessages, PROGRAM_ID);
-        console.log(`Decoded ${events.length} events:`, events);
+        console.log(
+          `Decoded ${events.length} events from transaction ${signature}`
+        );
 
         // Store events in Supabase
         for (const event of events) {
@@ -112,8 +307,8 @@ app.post("/webhook", async (req, res) => {
             const eventData = {
               event_type: event.name,
               transaction_hash: signature,
-              block_time: blockTime ? new Date(blockTime * 1000) : new Date(),
-              data: event.data,
+              block_time: timestamp,
+              data: event.data || {},
               program_id: PROGRAM_ID,
             };
 
@@ -142,12 +337,6 @@ app.post("/webhook", async (req, res) => {
           } catch (insertError) {
             console.error("Database insertion error:", insertError.message);
           }
-        }
-
-        if (events.length > 0) {
-          console.log(
-            `Processed ${events.length} events from transaction ${signature}`
-          );
         }
       } catch (transactionError) {
         console.error(

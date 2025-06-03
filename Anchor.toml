@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-nft_marketplace_program = "Aqdkvw8X7iFhj1NerjRrFUxKVSvrDBXgg4cCV5BMQkX2"
+nft_program = "Equiqs1Z5Q4F1gBuciqo6yrvqNERzwp5v9Fskhq2A5WB"
 
 [registry]
 url = "https://api.apr.dev"
@@ -16,3 +16,9 @@ wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[workspace]
+types = "target/types"
+
+[env]
+PROGRAM_KEYPAIR_PATH = "target/deploy/nft_marketplace-keypair.json"

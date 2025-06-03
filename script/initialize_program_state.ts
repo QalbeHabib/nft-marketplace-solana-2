@@ -5,9 +5,13 @@ import type { NftProgram } from "../target/types/nft_program"; // Adjust path to
 import * as fs from "fs";
 
 const PROGRAM_ID = new PublicKey(
-  "48Afa15ypgAHQr7qNm2QqW8WL114Ynwer556CV9chARa"
+  "Equiqs1Z5Q4F1gBuciqo6yrvqNERzwp5v9Fskhq2A5WB"
 );
-const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+// const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+const connection = new Connection(
+  "https://staging-rpc.dev2.eclipsenetwork.xyz",
+  "confirmed"
+);
 
 const walletKeypairFile = fs.readFileSync("./wallet-keypair.json", "utf-8");
 const walletKeypair = Keypair.fromSecretKey(

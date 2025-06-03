@@ -35,7 +35,7 @@
 
 // // Program ID from your lib.rs
 // const PROGRAM_ID = new PublicKey(
-//   "48Afa15ypgAHQr7qNm2QqW8WL114Ynwer556CV9chARa"
+//   "Equiqs1Z5Q4F1gBuciqo6yrvqNERzwp5v9Fskhq2A5WB"
 // );
 // const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 
@@ -218,7 +218,7 @@ import * as fs from "fs";
 
 // Program ID from your lib.rs
 const PROGRAM_ID = new PublicKey(
-  "48Afa15ypgAHQr7qNm2QqW8WL114Ynwer556CV9chARa"
+  "Equiqs1Z5Q4F1gBuciqo6yrvqNERzwp5v9Fskhq2A5WB"
 );
 const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 
